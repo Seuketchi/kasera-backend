@@ -1,118 +1,165 @@
-# The Path — Phase 1 Guide
+# The Path — Kasera (Operations App)
 
-How to walk through this project. The task list itself lives in the plan
-(`~/personal/second-brain/docs/superpowers/plans/2026-07-05-boarding-house-booking-app-phase1.md`);
-this guide adds the loop around each task: what to read first, what decisions
-you'll face, which docs those decisions land in, and when to commit.
+How to walk through this project. This guide is self-contained: the task sequence
+lives here. Each task says what must exist by the end of it, how to check it
+manually, and which docs/ADRs it touches.
 
 **The loop, every task:**
 
 ```
-read → decide (ask tutor about options if stuck) → build → verify manually → document → commit
+read → decide → build → verify manually → document → commit
 ```
 
-- *Read* — just-in-time, from the map in `learning-sources.md`. Never more than the current task needs.
-- *Decide* — before coding, name the choices the task forces. If you don't know the standard options, ask (Claude session): "what are the standard options for X and their tradeoffs?" — get options, not answers.
-- *Build* — you write every line. No generated code, per the spec.
-- *Verify* — each task's **Manual check** section in the plan is the definition of done.
-- *Document* — ADRs for decisions, plus the doc updates listed per task below. Write them same-day; the context evaporates fast.
+- *Read* — just-in-time, from the map in `learning-sources.md`.
+- *Decide* — the big cross-cutting decisions are already ADRs (0005–0010); a task
+  may still force a small local choice — name it, then write it down.
+- *Build* — you write every line. The docs are your reference; read them, then
+  code against them.
+- *Verify* — the **Manual check** in each task is the definition of done.
+- *Document* — update `data-model.md` / `api.md` to match what you built.
 - *Commit* — after the manual check passes, docs included.
+
+Key references while building: `architecture.md`, `conventions/kotlin-spring.md`,
+`data-model.md`, `api.md`, `adr/`.
 
 ---
 
-## Before Task 0 — foundations on paper
+## Ordering note — domain first, auth last
 
-- **Write ADR 0001:** one repo or two (backend + Flutter)? This also decides where `git init` runs.
-- **Write ADR 0002:** modular monolith over microservices (backfill from the spec's reasoning).
-- **Write ADR 0003:** no automated testing for this project (unusual decisions need ADRs most).
-- Add all three to the ADR index table.
+This path builds the **domain (rooms → tenants → billing) first**, then adds
+**auth last**. That's deliberate: you get the interesting app working fast without
+JWT ceremony up front. The tradeoff, stated honestly:
 
-## Task 0 — scaffolding
+- Until Task 8, endpoints are **unauthenticated** and there is **no owner** — you
+  test against a single implicit account.
+- `Property` and `Tenant` get their `ownerId` field, and every ownership check
+  (the 403-vs-404 rule, the room→property→owner walk), **when auth lands in Task
+  8**. The `data-model.md` / `api.md` docs describe the *finished* owner-scoped
+  design; these early tasks build toward it, and Task 8 wires the owner in.
 
-- **Read:** Spring guide *"Building web applications with Spring Boot and Kotlin"*; Grzybek's *Modular Monolith: A Primer*.
-- **Decide:** package name; module layout (this is where the modular-monolith idea becomes real folders).
-- **Document:** start `README.md` (stack + running locally); start `docs/architecture.md` (modules + dependency rules).
+---
 
-## Task 1 — user identity & registration
+## Task 0 — Scaffolding ✅
 
-- **Read:** OWASP *Password Storage* cheat sheet; Spring Academy REST API course if you want the guided version.
-- **Decide:** package layout inside a module; entity-vs-DTO boundary; where validation lives; duplicate-email error shape.
-- **Document:** start `conventions/kotlin-spring.md` (layout, DI, entity/DTO sections); start `docs/data-model.md` (User); start `docs/api.md` (conventions section + register endpoint).
+Spring Boot Kotlin project boots; Postgres and Redis run via `compose.yaml`. Done.
 
-## Task 2 — login & access tokens
+## Task 1 — Properties  *(module: properties)*
 
-- **Read:** OWASP *JWT* cheat sheet; jwt.io intro; Spilcă (*Spring Security in Action*) on the filter chain.
-- **Decide:** token lifetime; what claims go in; how 401s are produced consistently.
-- **Document:** `api.md` (login, who-am-I); `conventions/kotlin-spring.md` (error handling section — the 401/403/404 rule starts here).
+The `Property` entity (name, location, active flag) plus create / list / get /
+edit / deactivate. Deactivate instead of delete (ADR 0010). No `ownerId` yet —
+that arrives with auth (Task 8).
 
-## Task 3 — refresh tokens, Redis, logout
+**Manual check:** create a property; edit it; deactivate it and confirm it drops
+out of the active list; a made-up id returns `404`.
+**Docs:** `data-model.md` (Property), `api.md` (properties).
 
-- **Read:** OWASP *Session Management* cheat sheet; redis.io data-types tutorial + key naming conventions.
-- **Decide:** the key naming scheme (token-as-key, session index); TTLs.
-- **Write ADR:** refresh rotation with token-as-key in Redis; single active session per user (one ADR or two — your call, but "one decision per ADR" suggests two).
-- **Document:** start `conventions/redis.md` (key scheme + TTL policy); `api.md` (refresh, logout).
+## Task 2 — Rooms  *(module: rooms)*
 
-## Task 4 — properties
+The `Room` entity — rent in centavos (ADR 0005), under a property — plus
+create / list-under-property / get / edit / deactivate. Deactivating a property
+hides its rooms. Occupancy is **not** stored (ADR 0007); it stays blank until
+tenancies exist (Task 4).
 
-- **Decide:** how ownership-from-authenticated-identity is enforced; how role checks are expressed.
-- **Write ADR:** delist instead of hard-delete.
-- **Document:** `data-model.md` (Property); `api.md` (properties endpoints); `architecture.md` if the module boundary surprised you.
+**Manual check:** add rooms under a property; deactivating the property hides its
+rooms from the active list; editing a room's rent works.
+**Docs:** `data-model.md` (Room — note the no-stored-occupancy absence),
+`api.md` (rooms).
 
-## Task 5 — rooms
+## Task 3 — Tenants  *(module: tenants)*
 
-- **Decide:** where the ownership-chain walk lives (this pattern repeats in Tasks 7–8 — decide once).
-- **Document:** `data-model.md` (Room — including the deliberate absence of a stored availability flag); `api.md` (rooms endpoints).
+The `Tenant` entity — records you manage (not users, ADR 0008): name, optional
+phone/email. Create / list / get / edit.
 
-## Task 6 — booking requests (pending only)
+**Manual check:** create a tenant; edit it; list shows it.
+**Docs:** `data-model.md` (Tenant), `api.md` (tenants).
 
-- **Write ADR:** price locked into the booking at request time.
-- **Document:** `data-model.md` (Booking + the lifecycle state table); `api.md` (request + my-bookings endpoints).
+## Task 4 — Tenancies: assignment, the DB constraint, occupancy, move-out  *(module: tenants)*
 
-## Task 7 — approval, the DB constraint, auto-reject
+The heart of the domain. The `Tenancy` entity links a tenant to a room and locks
+in the rent at move-in. Enforce **one active tenancy per room** with the database
+constraint (ADR 0009) — attempt the insert, translate the violation into `409`.
+Build move-out (set end date), and the derived-occupancy check rooms will call
+(ADR 0007), then wire occupancy into the rooms responses.
 
-- **Read (before, not during):** PostgreSQL docs — *partial indexes* chapter; skim *transaction isolation* for the why.
-- **Write ADR:** double-booking prevented by a database constraint — the full MADR treatment, three considered options (app-level check-then-act, Redis lock, DB partial unique index).
-- **Write ADR:** auto-reject competing pending requests on approval.
-- **Document:** `data-model.md` (integrity rules section); `api.md` (owner request views, approve, reject — including the constraint-violation error).
+**Read first:** the PostgreSQL *partial indexes* chapter.
+**Manual check:** assign a tenant to a room; a second assignment to the same room
+returns `409`; the room now reads occupied; end the tenancy and the room reads
+available again immediately; a room with an active tenancy can't be deactivated.
+**Docs:** `data-model.md` (Tenancy + lifecycle + the constraint), `api.md`
+(tenancies).
 
-## Task 8 — cancel, end, derived availability
+## Task 5 — Billing: charges  *(module: billing)*
 
-- **Write ADR:** availability is derived, never stored.
-- **Document:** `data-model.md` (what actually frees a room — both exits); `api.md` (cancel, end); `architecture.md` (the rooms→bookings dependency edge is now real — draw it).
+The `Charge` entity. Generate a rent charge for a tenancy for a given month
+(amount copied from the tenancy's locked rent, ADR 0006). One charge per tenancy
+per month (unique constraint).
 
-## Task 9 — search
+**Manual check:** generate a charge; the same month again returns `409`; the
+amount matches the tenancy's locked rent even after the room's rent was edited.
+**Docs:** `data-model.md` (Charge), `api.md` (charges).
 
-- **Read:** skim the Zalando guidelines on query parameters / filtering.
-- **Document:** `api.md` (search parameters + the pending-rooms-still-appear rule).
+## Task 6 — Billing: payments & balances  *(module: billing)*
 
-## Task 10 — Redis search caching
+The `Payment` entity, recorded against a charge. A charge's outstanding balance is
+its amount minus its payments; a tenant's balance sums their unpaid charges.
+Reject a payment larger than the outstanding balance (MVP — no overpayment).
 
-- **Read:** redis.io caching patterns (cache-aside).
-- **Decide:** cache key derivation from filter combinations (normalization/ordering); invalidation vs TTL-only — the plan explicitly says "decide which and note why."
-- **Write ADR:** search cache keying + invalidation strategy.
-- **Document:** `conventions/redis.md` (search cache key type + TTL row).
+**Manual check:** a partial payment lowers the charge's balance; an over-payment
+is rejected; the tenant balance reflects all unpaid charges.
+**Docs:** `data-model.md` (Payment), `api.md` (payments, tenant balance).
 
-## Task 11 — Flutter: auth screens
+## Task 7 — Reports  *(module: billing)*
 
-- **Read:** nothing new — this is your day job. The exercise is choosing what NOT to carry over.
-- **Decide:** project structure and state management, simpler than work's stack — and why.
-- **Document:** start `conventions/flutter.md`; consider an ADR if the deviation reasoning feels decision-shaped.
+A per-property report: current occupancy, this month's expected vs. collected
+rent, and who's in arrears. (Optional stretch: cache it in Redis, cache-aside.)
 
-## Tasks 12–13 — owner & boarder screens
+**Manual check:** the numbers reconcile by hand against the tenancies, charges,
+and payments.
+**Docs:** `api.md` (report).
 
-- **Document:** the screens↔endpoints table in `conventions/flutter.md` as you go.
+## Task 8 — Auth + the ownership retrofit  *(module: auth, then across all)*
 
-## Task 14 — end-to-end pass
+Now secure it. Build the `User` entity (owner, BCrypt-hashed password, unique
+email), registration, login issuing a JWT access token, the JWT filter, and
+`GET /auth/me`. **Then retrofit ownership:** add `ownerId` to `Property` and
+`Tenant`, source it from the authenticated identity, and add the ownership checks
+across Tasks 1–7 — the room→property→owner walk and the 403-vs-404 distinction.
 
-- Walk the full flow fresh, per the plan.
-- **Document:** anything awkward goes in a `## Phase 2 candidates` note (README or a scratch doc) — that list seeds the next spec.
-- Final pass over every doc: does each one match what was actually built? Fix drift now, while you still remember.
+**Read first:** OWASP Password Storage + JWT cheat sheets; Spilcă on the filter
+chain.
+**Manual check:** register + log in; a protected endpoint works with the token and
+returns `401` without it; owner B gets `403` touching owner A's property/room/
+tenant/tenancy, and `404` for a non-existent id.
+**Docs:** `data-model.md` (User + the ownerId fields), `api.md` (auth + confirm
+the ownership rules across every endpoint).
+
+## Task 9 — Refresh tokens, Redis, logout  *(module: auth)*
+
+Add refresh tokens stored in Redis (token-as-key), rotation on refresh, single
+active session per user, and logout.
+
+**Manual check:** refresh succeeds; reusing the old refresh token after a refresh
+fails; a second login invalidates the first session; logout kills the token.
+**Docs:** `conventions/redis.md` (confirm key scheme), `api.md` (refresh, logout).
+
+## Tasks 10–12 — Flutter owner app
+
+Owner login, then property/room management, then tenant/tenancy management and the
+billing/collection screens. Owner-only.
+**Docs:** `conventions/flutter.md` (structure + the screens↔endpoints table).
+
+## Task 13 — End-to-end pass
+
+Walk the whole flow fresh: register + log in, add a property + room, add a tenant,
+start a tenancy, generate a charge, record a payment, read the report, end the
+tenancy, confirm the room frees up. Note anything awkward as Phase 2 candidates.
+Final doc pass — fix any drift while it's fresh.
 
 ---
 
 ## Standing rules
 
-- **Commit after every task** — code and docs together, once the manual check passes.
+- **Commit after every task** — code and docs together, once the manual check
+  passes.
 - **One decision per ADR;** accepted ADRs are immutable — supersede, don't edit.
-- **If a doc section stays empty two tasks past its slot,** either write it or delete the section — a skeleton that lingers is noise.
-- **When stuck on a choice:** ask for options and tradeoffs, decide yourself, write it down. Never ask for the answer.
+- **If a doc section stays empty two tasks past its slot,** write it or delete it.

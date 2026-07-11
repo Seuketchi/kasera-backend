@@ -1,19 +1,19 @@
 # Learning Sources
 
-Reference list, not a reading queue. Read just-in-time — match the source to
-the task you're about to start, then immediately write the conventions doc or
-ADR it informs. Reading everything upfront is how learning projects stall at
-the research phase.
+Reference list, not a reading queue. Read just-in-time — match the source to the
+task you're about to start, then immediately update the doc or ADR it informs.
+Reading everything upfront is how learning projects stall at the research phase.
 
 ## Read-before-task map
 
 | Before task | Read |
 |---|---|
-| Task 0 | Spring guide "Building web applications with Spring Boot and Kotlin"; Grzybek's Modular Monolith primer |
 | Task 1 | OWASP Password Storage cheat sheet; Spring Academy "Building a REST API with Spring Boot" |
 | Task 2 | OWASP JWT cheat sheet; jwt.io introduction; Spilcă on the Spring Security filter chain |
 | Task 3 | OWASP Session Management cheat sheet; redis.io data-types tutorial + key naming conventions |
-| Task 7 | PostgreSQL docs: partial indexes chapter (+ transaction isolation chapter) |
+| Task 5 | Nothing new — money as centavos is decided (ADR 0005); just apply it |
+| Task 7 | PostgreSQL docs: partial indexes chapter (the one-active-tenancy constraint) + transaction isolation chapter (why the constraint beats check-then-act) |
+| Task 8–9 | Nothing new — the charge/payment ledger model is decided (ADR 0006); Martin Fowler's "Money" pattern is optional background |
 | Task 10 | redis.io caching patterns (cache-aside) |
 | Task 11 | Nothing new — reuse work-honed Flutter knowledge, note deviations in conventions/flutter.md |
 
@@ -33,13 +33,17 @@ the research phase.
 
 ## PostgreSQL
 
-- **Official docs — partial indexes chapter** — literally the Task 7 constraint. Read before that task, not during.
-- **Official docs — transaction isolation chapter** — why the constraint approach beats check-then-act.
+- **Official docs — partial indexes chapter** — literally the Task 7 one-active-tenancy constraint. Read before that task, not during.
+- **Official docs — transaction isolation chapter** — why the database-constraint approach beats an application check-then-act under concurrency.
+
+## Money handling
+
+- **Martin Fowler — "Money" pattern** (in *Patterns of Enterprise Application Architecture*, summarized free online) — why money is minor-unit integers or a decimal type, never a float. Background for ADR 0005.
 
 ## Redis
 
 - **redis.io official docs** — data-types tutorial; the caching-patterns page (cache-aside is documented there by name); key naming conventions.
-- **Redis University** — free official courses; RU101 covers everything Phase 1 needs.
+- **Redis University** — free official courses; RU101 covers everything this project needs.
 
 ## Modular monolith / architecture
 
@@ -54,4 +58,4 @@ the research phase.
 
 ## Interview-prep crossover
 
-- **"Designing Data-Intensive Applications"** — Martin Kleppmann. Chapter 7 (Transactions) directly deepens the double-booking constraint work; the single highest-value book for system-design interviews generally.
+- **"Designing Data-Intensive Applications"** — Martin Kleppmann. Chapter 7 (Transactions) directly deepens the one-active-tenancy constraint work; the single highest-value book for system-design interviews generally.

@@ -1,44 +1,42 @@
-# Boarding House Booking — Backend
+# Kasera — Boarding House Operations Backend
 
-A booking system for boarding houses: owners list properties and rooms,
-boarders request bookings, owners approve or reject them. This is a
-deliberate learning project — every line is written by hand, decisions are
-recorded as they're made, and the build order lives in [docs/path.md](docs/path.md).
-Per [ADR 0001](docs/adr/0001-separate-repos-for-backend-and-client.md) the
-Flutter client lives in its own repository; this repo is the backend and the
-home of the shared documentation.
+> **Kasera** (Filipino: *landlady / landlord*) — the owner's tool for running a
+> boarding house. Formerly a booking marketplace; pivoted to an
+> operations/management app on 2026-07-12
+> ([ADR 0004](docs/adr/0004-pivot-from-booking-marketplace-to-operations-app.md)).
+
+An operations tool a boarding-house **owner** uses to run the place: track who
+lives in which room (tenants and tenancies), charge rent each month, record
+payments, and see who owes what. Owner-only for the MVP — tenants are records the
+owner manages, not accounts ([ADR 0008](docs/adr/0008-owner-only-tenants-do-not-log-in.md)).
+
+This is a deliberate learning project — every line is written by hand, decisions
+are recorded as ADRs, and the build order lives in [docs/path.md](docs/path.md).
+Per [ADR 0001](docs/adr/0001-separate-repos-for-backend-and-client.md) the Flutter
+client lives in its own repository; this repo is the backend and the home of the
+shared documentation.
 
 ## Stack
 
-- **Backend:** Kotlin / Spring Boot 4, Java 21 toolchain (Gradle downloads
-  the JDK itself via the foojay resolver — no local JDK 21 install needed)
-- **Database:** PostgreSQL 17, run via Docker
-- **Cache / sessions:** Redis, run via Docker (arrives in Task 3 — not
-  needed to boot the app today)
+- **Backend:** Kotlin / Spring Boot 4, Java 21 toolchain (Gradle downloads the
+  JDK itself via the foojay resolver — no local JDK 21 install needed)
+- **Database:** PostgreSQL, run via Docker
+- **Cache / sessions:** Redis, run via Docker (used from Task 3 onward)
 - **Client:** Flutter (separate repository)
 
 ## Running locally
 
 Prerequisites: Docker. (Gradle and the JDK are handled by the wrapper.)
 
-1. **Start Postgres:**
+1. **Start Postgres + Redis:**
 
    ```bash
-   docker run -d --name boardinghouse-db -e POSTGRES_DB=boardinghouse -e POSTGRES_USER=boardinghouse -e POSTGRES_PASSWORD=devpassword -p 5432:5432 postgres:17
+   docker compose up -d
    ```
 
-   Verify the user/database actually exist (catches a mistyped `-e` flag
-   immediately):
-
-   ```bash
-   docker exec boardinghouse-db psql -U boardinghouse -d boardinghouse -c 'select 1'
-   ```
-
-   To **reset** the database to factory-fresh, delete and recreate it:
-
-   ```bash
-   docker rm -f boardinghouse-db   # then re-run the docker run above
-   ```
+   This uses `docker-compose.yml` — database `boardinghouse`, user `boardinghouse`,
+   password `devpassword`, plus Redis. To reset the database to factory-fresh:
+   `docker compose down -v` then `docker compose up -d`.
 
 2. **Run the backend:**
 
@@ -46,24 +44,28 @@ Prerequisites: Docker. (Gradle and the JDK are handled by the wrapper.)
    ./gradlew bootRun
    ```
 
-   Gradle parks at "85% EXECUTING" while the app runs — that's normal; the
-   task only "finishes" when the server stops. Look for
-   `Started BackendApplication` in the log. Stop with Ctrl+C.
+   Gradle parks at "EXECUTING" while the app runs — that's normal; the task only
+   "finishes" when the server stops. Look for `Started BackendApplicationKt` in
+   the log. Stop with Ctrl+C.
 
-3. **Check it's alive:** `curl -i http://localhost:8080` should return
-   **401 Unauthorized**. Until real auth lands (Task 2), Spring Security
-   guards everything with a default login form — user `user`, password
-   printed in the startup log (`Using generated security password: …`) —
-   and logging in leads to a 404, because no endpoints exist yet. All of
-   that is expected.
+3. **Check it's alive:** `curl -i http://localhost:8080` returns **401
+   Unauthorized** until real auth lands (Task 2) — Spring Security guards
+   everything with a default login (user `user`, password printed in the startup
+   log as `Using generated security password: …`). That's expected.
+
+### Hot reload (optional)
+
+DevTools is on. For auto-restart on save, run the app in one terminal
+(`./gradlew bootRun`) and a recompile watcher in another (`./gradlew -t classes`):
+saving a `.kt` file recompiles it and DevTools restarts the app in ~1s.
 
 ## Documentation
 
 | Doc | What it covers |
 |-----|----------------|
-| [docs/path.md](docs/path.md) | How to walk this project — the per-task loop |
-| [docs/architecture.md](docs/architecture.md) | Modules and dependency rules |
-| [docs/data-model.md](docs/data-model.md) | Entities as they get built |
+| [docs/path.md](docs/path.md) | The task-by-task build order and the per-task loop |
+| [docs/architecture.md](docs/architecture.md) | Modules and the allowed dependency edges |
+| [docs/data-model.md](docs/data-model.md) | Entities, relationships, lifecycle, DB rules |
 | [docs/api.md](docs/api.md) | Endpoint contracts and error shapes |
 | [docs/conventions/](docs/conventions) | Kotlin/Spring, Redis, and Flutter conventions |
 | [docs/adr/](docs/adr) | Decision records (index in its README) |
