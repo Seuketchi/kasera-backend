@@ -3,8 +3,8 @@ package com.boardinghouse.backend.properties.service
 import com.boardinghouse.backend.properties.web.*
 import com.boardinghouse.backend.properties.persistence.*
 import com.boardinghouse.backend.shared.NotFoundException
+import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
 class PropertyService(

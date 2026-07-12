@@ -1,4 +1,3 @@
 package com.boardinghouse.backend.shared
 
-class ConflictException {
-}
+class ConflictException (message: String) : RuntimeException(message)

@@ -11,4 +11,8 @@ class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handle(ex: NotFoundException) = mapOf("error" to ex.message)
+
+    @ExceptionHandler(ConflictException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handle(ex: ConflictException) = mapOf("error" to ex.message)
 }
