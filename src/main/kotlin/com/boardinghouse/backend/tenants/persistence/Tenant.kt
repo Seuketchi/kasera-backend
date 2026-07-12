@@ -1,14 +1,13 @@
-package com.boardinghouse.backend.properties.persistence
+package com.boardinghouse.backend.tenants.persistence
 
 import jakarta.persistence.*
 
-
 @Entity
-class Property (
+class Tenant (
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
     var name: String = "",
-    var location: String = "",
-    var active: Boolean = true,
+    var phone: String? = null,
+    var email: String? = null,
 )
