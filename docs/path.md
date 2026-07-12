@@ -11,7 +11,7 @@ read → decide → build → verify manually → document → commit
 ```
 
 - *Read* — just-in-time, from the map in `learning-sources.md`.
-- *Decide* — the big cross-cutting decisions are already ADRs (0005–0010); a task
+- *Decide* — the big cross-cutting decisions are already ADRs (0005–0011); a task
   may still force a small local choice — name it, then write it down.
 - *Build* — you write every line. The docs are your reference; read them, then
   code against them.
@@ -55,7 +55,7 @@ out of the active list; a made-up id returns `404`.
 
 ## Task 2 — Rooms  *(module: rooms)*
 
-The `Room` entity — rent in centavos (ADR 0005), under a property — plus
+The `Room` entity — rent as `BigDecimal` (ADR 0011), under a property — plus
 create / list-under-property / get / edit / deactivate. Deactivating a property
 hides its rooms. Occupancy is **not** stored (ADR 0007); it stays blank until
 tenancies exist (Task 4).

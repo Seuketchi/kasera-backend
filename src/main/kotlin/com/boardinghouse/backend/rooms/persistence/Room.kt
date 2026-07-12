@@ -1,6 +1,7 @@
 package com.boardinghouse.backend.rooms.persistence
 
 import jakarta.persistence.*
+import java.math.BigDecimal
 
 @Entity
 class Room (
@@ -9,7 +10,7 @@ class Room (
     val id: Long = 0,
     val propertyId: Long = 0,
     var label: String = "",
-    var monthlyRent: Long = 0,
+    var monthlyRent: BigDecimal = BigDecimal.ZERO,
     var description: String = "",
     var active: Boolean = false,
 )

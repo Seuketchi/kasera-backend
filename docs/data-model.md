@@ -1,7 +1,7 @@
 # Data Model
 
 > **Operations app (post-pivot, ADR 0004).** Entities and rules for the
-> owner-only MVP. Money is integer centavos throughout (ADR 0005). All fields are
+> owner-only MVP. Money is `BigDecimal` throughout (ADR 0011). All fields are
 > described in prose — you write the actual classes.
 
 ## Entities
@@ -39,7 +39,7 @@ A rentable unit inside a property.
 | id | generated number | |
 | propertyId | reference → Property | |
 | label | text | e.g. "Room 1", "Unit A" |
-| monthlyRentCents | number (centavos) | the current asking rent; ADR 0005 |
+| monthlyRent | BigDecimal | the current asking rent; ADR 0011 |
 | description | text, optional | |
 | active | boolean | ADR 0010 |
 
@@ -70,8 +70,8 @@ rent is locked in.
 | id | generated number | |
 | tenantId | reference → Tenant | |
 | roomId | reference → Room | |
-| monthlyRentCents | number (centavos) | **captured from the room's rent at move-in** and never changed afterward — a later edit to the room's rent does not alter an ongoing tenancy (the lease-price-lock principle, mirroring ADR 0006's reasoning) |
-| depositCents | number (centavos) | amount held; ADR 0005 |
+| monthlyRent | BigDecimal | **captured from the room's rent at move-in** and never changed afterward — a later edit to the room's rent does not alter an ongoing tenancy (the lease-price-lock principle, mirroring ADR 0006's reasoning) |
+| deposit | BigDecimal | amount held; ADR 0011 |
 | startDate | date | move-in |
 | endDate | date, nullable | move-out; **empty while the tenancy is ongoing** |
 
@@ -87,11 +87,11 @@ One period's rent owed for a tenancy (ADR 0006).
 | id | generated number | |
 | tenancyId | reference → Tenancy | |
 | periodYearMonth | year-month | the month this charge is for; unique per tenancy (a tenancy can't be charged twice for the same month) |
-| amountCents | number (centavos) | copied from the tenancy's locked rent at generation time |
+| amount | BigDecimal | copied from the tenancy's locked rent at generation time |
 | dueDate | date | |
 | createdAt | timestamp | |
 
-A charge's **outstanding balance** is `amountCents` minus the sum of its
+A charge's **outstanding balance** is `amount` minus the sum of its
 payments. It is derived, not stored — the same single-source-of-truth reasoning
 as occupancy.
 
@@ -103,7 +103,7 @@ Money received, recorded against a specific charge.
 |---|---|---|
 | id | generated number | |
 | chargeId | reference → Charge | the period this payment settles |
-| amountCents | number (centavos) | must not exceed the charge's outstanding balance in the MVP (overpayment/credit deferred) |
+| amount | BigDecimal | must not exceed the charge's outstanding balance in the MVP (overpayment/credit deferred) |
 | paidOn | date | |
 | note | text, optional | e.g. "GCash ref 12345" |
 

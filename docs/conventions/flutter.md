@@ -32,9 +32,9 @@ storage unsuitable for credentials.
 
 ## Money on the client
 
-The backend speaks **centavos** (ADR 0005). Convert to/from pesos only at the UI
-edge: divide by 100 for display, multiply by 100 when sending an amount a user
-typed in pesos. Never do money math in floating point on the client either.
+The backend speaks **decimals** (`BigDecimal`, ADR 0011) — amounts come and go as
+normal values like `4500.00`, no ÷100 conversion needed. Never do money math in
+floating point on the client either; use a decimal-safe type for any arithmetic.
 
 ## Screens ↔ backend mapping
 

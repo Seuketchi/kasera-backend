@@ -11,7 +11,7 @@ Reading everything upfront is how learning projects stall at the research phase.
 | Task 1 | OWASP Password Storage cheat sheet; Spring Academy "Building a REST API with Spring Boot" |
 | Task 2 | OWASP JWT cheat sheet; jwt.io introduction; Spilcă on the Spring Security filter chain |
 | Task 3 | OWASP Session Management cheat sheet; redis.io data-types tutorial + key naming conventions |
-| Task 5 | Nothing new — money as centavos is decided (ADR 0005); just apply it |
+| Task 5 | Nothing new — money as `BigDecimal` is decided (ADR 0011); just apply it |
 | Task 7 | PostgreSQL docs: partial indexes chapter (the one-active-tenancy constraint) + transaction isolation chapter (why the constraint beats check-then-act) |
 | Task 8–9 | Nothing new — the charge/payment ledger model is decided (ADR 0006); Martin Fowler's "Money" pattern is optional background |
 | Task 10 | redis.io caching patterns (cache-aside) |
@@ -38,7 +38,7 @@ Reading everything upfront is how learning projects stall at the research phase.
 
 ## Money handling
 
-- **Martin Fowler — "Money" pattern** (in *Patterns of Enterprise Application Architecture*, summarized free online) — why money is minor-unit integers or a decimal type, never a float. Background for ADR 0005.
+- **Martin Fowler — "Money" pattern** (in *Patterns of Enterprise Application Architecture*, summarized free online) — why money is minor-unit integers or a decimal type, never a float. Background for ADR 0011.
 
 ## Redis
 

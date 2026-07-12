@@ -1,6 +1,6 @@
 # 0005 — Money stored as integer minor units (centavos)
 
-**Status:** Accepted
+**Status:** Superseded by ADR 0011
 **Date:** 2026-07-12
 
 ## Context

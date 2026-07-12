@@ -2,7 +2,7 @@
 
 > **Operations app (post-pivot, ADR 0004).** The module boundaries and
 > dependency edges below follow from the operations design and its decision
-> records (ADRs 0005–0010). They describe the intended shape; revisit each
+> records (ADRs 0005–0011). They describe the intended shape; revisit each
 > module's section once it is actually built.
 
 ## Modules
@@ -14,8 +14,8 @@
 - **properties** — owns the `Property` entity: owner reference, name, location,
   active flag. Owns create / edit / deactivate and the first ownership check
   (`property.owner == authenticated user`).
-- **rooms** — owns the `Room` entity: property reference, monthly rent (centavos,
-  ADR 0005), description, active flag. Owns the ownership-chain walk one hop
+- **rooms** — owns the `Room` entity: property reference, monthly rent (`BigDecimal`,
+  ADR 0011), description, active flag. Owns the ownership-chain walk one hop
   further (room → property → owner), the property-deactivate cascade (a
   deactivated property hides its rooms), and *derived* occupancy — it asks the
   `tenants` module whether an active tenancy exists rather than storing an

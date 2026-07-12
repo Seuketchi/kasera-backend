@@ -1,8 +1,9 @@
 # API Reference
 
 > **Operations app (post-pivot, ADR 0004), owner-only MVP (ADR 0008).** Fields
-> are described in tables rather than literal JSON. Money fields are **centavos**
-> in/out (ADR 0005) — the client converts to/from pesos at its edge. This doubles
+> are described in tables rather than literal JSON. Money fields are **decimals**
+> (`BigDecimal`, ADR 0011) — sent/returned as normal amounts like `4500.00`, no
+> conversion needed. This doubles
 > as your Postman companion.
 
 ## Conventions
@@ -15,7 +16,7 @@
   request field. You cannot create or read another owner's data.
 - **Resource paths** are plural nouns; nested paths express containment
   (`/properties/{id}/rooms`).
-- **Money** is sent and returned as integer centavos.
+- **Money** is sent and returned as decimal values (e.g. `4500.00`).
 
 ### Error shape and the status scheme
 
@@ -57,10 +58,10 @@ but isn't yours returns 403; asking for one that doesn't exist returns 404.
 
 | Method + path | Auth | Request fields | Success | Failure |
 |---|---|---|---|---|
-| `POST /properties/{propertyId}/rooms` | owner | label, monthlyRentCents, description? | `201` + room | `403` · `404` (property) |
+| `POST /properties/{propertyId}/rooms` | owner | label, monthlyRent, description? | `201` + room | `403` · `404` (property) |
 | `GET /properties/{propertyId}/rooms` | owner | — | `200` + rooms, each with **derived occupancy** and current tenant name if occupied | `403` · `404` |
 | `GET /rooms/{id}` | owner | — | `200` + room + occupancy | `403` · `404` |
-| `PUT /rooms/{id}` | owner | label, monthlyRentCents, description? | `200` + updated (does **not** change any ongoing tenancy's locked rent) | `403` · `404` |
+| `PUT /rooms/{id}` | owner | label, monthlyRent, description? | `200` + updated (does **not** change any ongoing tenancy's locked rent) | `403` · `404` |
 | `POST /rooms/{id}/deactivate` | owner | — | `204` | `403` · `404` · `409` if the room has an active tenancy |
 
 ## Tenants  (module: `tenants`)
@@ -77,7 +78,7 @@ but isn't yours returns 403; asking for one that doesn't exist returns 404.
 
 | Method + path | Auth | Request fields | Success | Failure |
 |---|---|---|---|---|
-| `POST /rooms/{roomId}/tenancies` | owner | tenantId, startDate, depositCents | `201` + tenancy (rent locked from the room's current rent) | `403` · `404` · `409` if the room already has an active tenancy (ADR 0009) |
+| `POST /rooms/{roomId}/tenancies` | owner | tenantId, startDate, deposit | `201` + tenancy (rent locked from the room's current rent) | `403` · `404` · `409` if the room already has an active tenancy (ADR 0009) |
 | `GET /rooms/{roomId}/tenancies` | owner | — | `200` + tenancy history for the room | `403` · `404` |
 | `GET /tenancies/{id}` | owner | — | `200` + tenancy | `403` · `404` |
 | `POST /tenancies/{id}/end` | owner | endDate | `204` (frees the room immediately) | `403` · `404` |
@@ -94,7 +95,7 @@ but isn't yours returns 403; asking for one that doesn't exist returns 404.
 
 | Method + path | Auth | Request fields | Success | Failure |
 |---|---|---|---|---|
-| `POST /charges/{id}/payments` | owner | amountCents, paidOn, note? | `201` + payment + the charge's new balance | `403` · `404` · `400` if the amount exceeds the outstanding balance |
+| `POST /charges/{id}/payments` | owner | amount, paidOn, note? | `201` + payment + the charge's new balance | `403` · `404` · `400` if the amount exceeds the outstanding balance |
 | `GET /charges/{id}/payments` | owner | — | `200` + payments for the charge | `403` · `404` |
 
 ## Reports  (module: `billing`)

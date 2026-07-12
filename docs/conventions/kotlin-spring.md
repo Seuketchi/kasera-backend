@@ -90,10 +90,10 @@ An entity is the persisted shape of one domain thing. Rules:
 - **Nullability means "genuinely optional".** A tenancy's move-out date is
   nullable (empty while ongoing); most fields are non-null. Don't use nullable
   as a shortcut for "I'll fill it in later."
-- **Money fields — decision pending.** How amounts (rent, payments) are typed
-  is Open Decision #2 in the operations spec (integer minor units vs. a decimal
-  type — never floating point). Do not settle it inline in an entity; make the
-  call, write the ADR, then apply it everywhere at once.
+- **Money fields use `BigDecimal`** (ADR 0011) — named without a `Cents` suffix
+  (`monthlyRent`, `deposit`, `amount`), stored as SQL `NUMERIC`. Never floating
+  point. Use `BigDecimal` math (`.add`, `.subtract`, `.compareTo`) — not `==` —
+  with a consistent 2-decimal scale and rounding mode when computing values.
 - **JPA specifics:** entities need a no-arg-constructable, non-final shape,
   which the `kotlin("plugin.jpa")` + `allOpen` config in `build.gradle.kts`
   already provides for `@Entity`/`@Embeddable`/`@MappedSuperclass`. You write a
